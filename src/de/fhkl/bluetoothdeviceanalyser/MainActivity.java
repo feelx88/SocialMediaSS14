@@ -39,16 +39,15 @@ public class MainActivity extends Activity
 			}
 		});
 		
-		Intent i = new Intent(this, BluetoothService.class);
-		startService(i);
+		final Intent serviceIntent = new Intent(this, BluetoothService.class);
+		startService(serviceIntent);
 		
 		findViewById(R.id.button1).setOnClickListener(new OnClickListener() {
 			
 			@Override
-			public void onClick(View arg0)
+			public void onClick(View v)
 			{
-				Intent i = new Intent(getApplicationContext(), BluetoothService.class);
-				startService(i);
+				startService(serviceIntent);
 			}
 		});
 	}
