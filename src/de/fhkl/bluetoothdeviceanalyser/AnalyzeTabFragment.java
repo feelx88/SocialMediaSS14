@@ -27,20 +27,27 @@ public class AnalyzeTabFragment extends Fragment
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
+			Bundle extras = intent.getExtras();
 			String action = intent.getAction();
 			if(action == BluetoothService.ACTION_DATA_AVAILABLE)
 			{
 				BluetoothDevice device =
-						(BluetoothDevice) intent.getExtras().get(BluetoothService.EXTRA_DEVICE);
+						(BluetoothDevice) extras.get(BluetoothService.EXTRA_DEVICE);
 				
-				int datatype = intent.getExtras().getInt(
-						BluetoothService.EXTRA_DATA_TYPE);
+				int datatype = extras.getInt(BluetoothService.EXTRA_DATA_TYPE);
 				if(datatype == BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST)
 				{
 					mRegisteredDevices.add(device);
 					mTextView.append("\n");
 					mTextView.append("Added device to watchlist: ");
 					mTextView.append(device.getName() + " (" + device.getAddress() + ")");
+				}
+				else if(datatype == BluetoothService.ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED)
+				{
+					mTextView.append("\n");
+					mTextView.append("Characteristic changed:\n");
+					mTextView.append("UUID: " + extras.getString(BluetoothService.EXTRA_CHARACTERISTIC_UUID) + "\n");
+					mTextView.append("Value: " + extras.getString(BluetoothService.EXTRA_CHARACTERISTIC_VALUE) + "\n");
 				}
 			}
 		}

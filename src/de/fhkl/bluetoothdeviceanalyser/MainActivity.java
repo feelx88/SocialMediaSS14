@@ -2,6 +2,8 @@ package de.fhkl.bluetoothdeviceanalyser;
 
 import java.util.HashMap;
 
+import de.fhkl.bluetoothdeviceanalyser.BluetoothService.LocalBinder;
+
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.ActionBar;
@@ -44,7 +46,8 @@ public class MainActivity extends FragmentActivity implements
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service)
 		{
-			mBluetoothService = (BluetoothService) service;
+			LocalBinder binder = (LocalBinder) service;
+			mBluetoothService = (BluetoothService) binder.getService();
 		}
 	};
 	

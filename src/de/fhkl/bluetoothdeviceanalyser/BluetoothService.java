@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -32,9 +33,12 @@ public class BluetoothService extends Service
 	public static final String EXTRA_ID = "EXTRA_ID"; 
 	public static final String EXTRA_DATA_TYPE = "EXTRA_DATA_TYPE";
 	public static final String EXTRA_CONNECTION_STATE = "EXTRA_CONNECTION_STATE";
+	public static final String EXTRA_CHARACTERISTIC_UUID = "EXTRA_CHARACTERISTIC_UUID";
+	public static final String EXTRA_CHARACTERISTIC_VALUE = "EXTRA_CHARACTERISTIC_VALUE";
 	
 	public static final int ID_DATATYPE_ADDED_TO_WATCHLIST = 1; 
 	public static final int ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED = 10;
+	public static final int ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED = 11;
 	
 	protected BluetoothAdapter mAdapter;
 	
@@ -56,10 +60,23 @@ public class BluetoothService extends Service
 		{			
 			Intent i = new Intent(ACTION_DATA_AVAILABLE);
 			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
-			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED);
+			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
 			i.putExtra(EXTRA_CONNECTION_STATE, newState);
 			sendBroadcast(i);
 			super.onConnectionStateChange(gatt, status, newState);
+		}
+		
+		@Override
+		public void onCharacteristicChanged(BluetoothGatt gatt,
+				BluetoothGattCharacteristic characteristic)
+		{
+			Intent i = new Intent(ACTION_DATA_AVAILABLE);
+			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
+			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED);
+			i.putExtra(EXTRA_CHARACTERISTIC_UUID, characteristic.getUuid().toString());
+			i.putExtra(EXTRA_CHARACTERISTIC_VALUE, characteristic.getValue().toString());
+			sendBroadcast(i);
+			super.onCharacteristicChanged(gatt, characteristic);
 		}
 	}
 	
@@ -75,31 +92,39 @@ public class BluetoothService extends Service
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
+		if(intent == null)
+		{
+			return 0;
+		}
+		
 		Bundle extras = intent.getExtras();
 		
-		if(extras.containsKey(EXTRA_ACTION))
-		{
-			if(extras.getInt(EXTRA_ACTION) == ID_START_SCAN)
+		if(extras != null)
+		{		
+			if(extras.containsKey(EXTRA_ACTION))
 			{
-				if(mScanCallback != null)
+				if(extras.getInt(EXTRA_ACTION) == ID_START_SCAN)
 				{
-					if(mAdapter.startLeScan(mScanCallback) == false)
+					if(mScanCallback != null)
 					{
-						mAdapter.stopLeScan(mScanCallback);
+						if(mAdapter.startLeScan(mScanCallback) == false)
+						{
+							mAdapter.stopLeScan(mScanCallback);
+						}
 					}
 				}
-			}
-			else if(extras.getInt(EXTRA_ACTION) == ID_ADD_DEVICE)
-			{
-				BluetoothDevice device = (BluetoothDevice) extras.get(EXTRA_DEVICE);
-				mGatts.add(device.connectGatt(getApplicationContext(), false,
-						new GattCallback()));
-				
-				Intent i = new Intent(ACTION_DATA_AVAILABLE);
-				i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_ADDED_TO_WATCHLIST);
-				i.putExtra(EXTRA_DEVICE, device);
-				i.putExtra(EXTRA_ID, mGatts.size() - 1);
-				sendBroadcast(i);
+				else if(extras.getInt(EXTRA_ACTION) == ID_ADD_DEVICE)
+				{
+					BluetoothDevice device = (BluetoothDevice) extras.get(EXTRA_DEVICE);
+					mGatts.add(device.connectGatt(getApplicationContext(), false,
+							new GattCallback()));
+					
+					Intent i = new Intent(ACTION_DATA_AVAILABLE);
+					i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_ADDED_TO_WATCHLIST);
+					i.putExtra(EXTRA_DEVICE, device);
+					i.putExtra(EXTRA_ID, mGatts.size() - 1);
+					sendBroadcast(i);
+				}
 			}
 		}
 		return super.onStartCommand(intent, flags, startId);
