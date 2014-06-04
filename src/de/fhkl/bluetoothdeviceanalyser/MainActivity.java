@@ -41,7 +41,6 @@ public class MainActivity extends FragmentActivity implements
 		{
 			return mFragments[position];
 		}
-		
 	}
 
 	@Override

@@ -4,16 +4,19 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 public class DeviceListTabFragment extends Fragment
 {
 	private BluetoothDeviceListAdapter mListAdapter;
+	private boolean mScanning = false;
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -24,6 +27,8 @@ public class DeviceListTabFragment extends Fragment
 		mListAdapter = new BluetoothDeviceListAdapter(getActivity());
 		final ListView list = ((ListView)view.findViewById(R.id.deviceList));
 		list.setAdapter(mListAdapter);
+		
+		final ProgressBar progressScan = (ProgressBar) view.findViewById(R.id.progressScan);
 		
 		BluetoothService.setScanCallback(new LeScanCallback() {
 			
@@ -43,16 +48,43 @@ public class DeviceListTabFragment extends Fragment
 		});
 		
 		final Intent serviceIntent = new Intent(getActivity(), BluetoothService.class);
-		getActivity().startService(serviceIntent);
 		
-		view.findViewById(R.id.button1).setOnClickListener(new OnClickListener() {
+		view.findViewById(R.id.buttonScan).setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v)
 			{
+				if(mScanning)
+				{
+					serviceIntent.putExtra(BluetoothService.EXTRA_ACTION,
+							BluetoothService.ID_STOP_SCAN);
+					progressScan.setVisibility(View.GONE);
+				}
+				else
+				{
+					serviceIntent.putExtra(BluetoothService.EXTRA_ACTION,
+							BluetoothService.ID_START_SCAN);
+					progressScan.setVisibility(View.VISIBLE);
+					mListAdapter.clear();
+					list.requestLayout();
+					
+					new Handler().postDelayed(new Runnable() {
+						
+						@Override
+						public void run()
+						{
+							serviceIntent.putExtra(BluetoothService.EXTRA_ACTION,
+									BluetoothService.ID_STOP_SCAN);
+							progressScan.setVisibility(View.GONE);
+						}
+					}, 30000);
+				}
+				mScanning = !mScanning;
 				getActivity().startService(serviceIntent);
 			}
 		});
+		
+		view.findViewById(R.id.buttonScan).performClick();
 		
 		return view;
 	}

@@ -8,13 +8,16 @@ import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
+import android.widget.CheckBox;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
-public class BluetoothDeviceListAdapter implements ListAdapter
+public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 {
 	LinkedList<BluetoothDevice> mDevices = new LinkedList<BluetoothDevice>();
 	LayoutInflater mInflater;
+	View mView;
 	
 	public BluetoothDeviceListAdapter(Context context)
 	{
@@ -50,13 +53,18 @@ public class BluetoothDeviceListAdapter implements ListAdapter
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
-		View view = mInflater.inflate(R.layout.device_list_fragment, parent, false);
-		((TextView)view.findViewById(R.id.name))
-			.setText(mDevices.get(position).getName());
-		((TextView)view.findViewById(R.id.address))
-			.setText(mDevices.get(position).getAddress());
+		if(mView == null)
+		{
+			mView = mInflater.inflate(R.layout.device_list_fragment, parent, false);
+			((TextView)mView.findViewById(R.id.name))
+				.setText(mDevices.get(position).getName());
+			((TextView)mView.findViewById(R.id.address))
+				.setText(mDevices.get(position).getAddress());
+			
+			mView.setOnClickListener(this);
+		}
 		
-		return view;
+		return mView;
 	}
 
 	@Override
@@ -103,9 +111,19 @@ public class BluetoothDeviceListAdapter implements ListAdapter
 		return true;
 	}
 	
+	@Override
+	public void onClick(View v)
+	{
+		((CheckBox)mView.findViewById(R.id.checkbox)).setChecked(true);
+	}
+	
 	public void add(BluetoothDevice device)
 	{
 		mDevices.add(device);
 	}
-
+	
+	public void clear()
+	{
+		mDevices.clear();
+	}
 }
