@@ -1,7 +1,5 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
-import java.util.LinkedList;
-
 import android.os.Bundle;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
@@ -10,14 +8,11 @@ import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 public class MainActivity extends Activity
 {
-	
-	protected LinkedList<String> mList = new LinkedList<String>();
-	protected ArrayAdapter<String> mListAdapter;
+	protected BluetoothDeviceListAdapter mListAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -25,17 +20,24 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		mListAdapter = new ArrayAdapter<String>(
-						this, R.layout.device_list_fragment, R.id.name, mList);
-		((ListView)findViewById(R.id.deviceList)).setAdapter(mListAdapter);
+		mListAdapter = new BluetoothDeviceListAdapter(this);
+		final ListView list = ((ListView)findViewById(R.id.deviceList));
+		list.setAdapter(mListAdapter);
 		
 		BluetoothService.setScanCallback(new LeScanCallback() {
 		
 			@Override
-			public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord)
+			public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord)
 			{
-				mList.add(device.getName());
-				mListAdapter.notifyDataSetChanged();
+				runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run()
+					{
+						mListAdapter.add(device);
+						list.requestLayout();
+					}
+				});
 			}
 		});
 		
