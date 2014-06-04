@@ -1,5 +1,6 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import android.bluetooth.BluetoothDevice;
@@ -29,12 +30,13 @@ public class AnalyzeTabFragment extends Fragment
 			String action = intent.getAction();
 			if(action == BluetoothService.ACTION_DATA_AVAILABLE)
 			{
+				BluetoothDevice device =
+						(BluetoothDevice) intent.getExtras().get(BluetoothService.EXTRA_DEVICE);
+				
 				int datatype = intent.getExtras().getInt(
 						BluetoothService.EXTRA_DATA_TYPE);
 				if(datatype == BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST)
 				{
-					BluetoothDevice device =
-							(BluetoothDevice) intent.getExtras().get(BluetoothService.EXTRA_DEVICE);
 					mRegisteredDevices.add(device);
 					mTextView.append("\n");
 					mTextView.append("Added device to watchlist: ");

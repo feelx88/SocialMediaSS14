@@ -1,9 +1,20 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
+import java.util.HashMap;
+
 import android.os.Bundle;
+import android.os.IBinder;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.FragmentTransaction;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -18,6 +29,53 @@ public class MainActivity extends FragmentActivity implements
 	protected BluetoothDeviceListAdapter mListAdapter;
 	protected ViewPager mViewPager;
 	private ActionBar mActionBar;
+	private HashMap<BluetoothDevice, IGattDataProcessor> mDataProcessors =
+			new HashMap<BluetoothDevice, IGattDataProcessor>();
+	private BluetoothService mBluetoothService;
+	
+	private ServiceConnection mServiceConnection = new ServiceConnection() {
+		
+		@Override
+		public void onServiceDisconnected(ComponentName name)
+		{	
+			mBluetoothService = null;
+		}
+		
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service)
+		{
+			mBluetoothService = (BluetoothService) service;
+		}
+	};
+	
+	private BroadcastReceiver mDataReceiver = new BroadcastReceiver() {
+		
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			String action = intent.getAction();
+			if(action == BluetoothService.ACTION_DATA_AVAILABLE)
+			{
+				BluetoothDevice device =
+						(BluetoothDevice) intent.getExtras().get(BluetoothService.EXTRA_DEVICE);
+				
+				int datatype = intent.getExtras().getInt(
+						BluetoothService.EXTRA_DATA_TYPE);
+				if(datatype == BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST)
+				{
+					if(mBluetoothService != null)
+					{
+						BluetoothGatt gatt = mBluetoothService.mGatts.get(0);
+						mDataProcessors.put(device, new HeartRateDataProcessor(gatt));
+					}
+				}
+				else
+				{
+					mDataProcessors.get(device).processIncomingData(intent);
+				}
+			}
+		}
+	};
 	
 	protected class PagerAdapter extends FragmentPagerAdapter
 	{
@@ -57,6 +115,18 @@ public class MainActivity extends FragmentActivity implements
 		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		mActionBar.addTab(getActionBar().newTab().setText("Device list").setTabListener(this));
 		mActionBar.addTab(getActionBar().newTab().setText("Analyze").setTabListener(this));
+		
+		registerReceiver(mDataReceiver,
+				new IntentFilter(BluetoothService.ACTION_DATA_AVAILABLE));
+		Intent i = new Intent(this, BluetoothService.class);
+		bindService(i, mServiceConnection, 0);
+	}
+	
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+		unregisterReceiver(mDataReceiver);
 	}
 
 	@Override

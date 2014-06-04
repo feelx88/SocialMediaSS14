@@ -1,5 +1,6 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import android.app.Service;
@@ -9,6 +10,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 
@@ -38,12 +40,20 @@ public class BluetoothService extends Service
 	
 	protected LinkedList<BluetoothGatt> mGatts = new LinkedList<BluetoothGatt>();
 	
+	public class LocalBinder extends Binder
+	{
+        BluetoothService getService()
+        {
+            return BluetoothService.this;
+        }
+    }
+	
 	public class GattCallback extends BluetoothGattCallback
-	{		
+	{
 		@Override
 		public void onConnectionStateChange(BluetoothGatt gatt, int status,
 				int newState)
-		{
+		{			
 			Intent i = new Intent(ACTION_DATA_AVAILABLE);
 			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
 			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED);
@@ -98,8 +108,7 @@ public class BluetoothService extends Service
 	@Override
 	public IBinder onBind(Intent intent)
 	{
-		// TODO: Return the communication channel to the service.
-		throw new UnsupportedOperationException("Not yet implemented");
+		return new LocalBinder();
 	}
 	
 	public static void setScanCallback(LeScanCallback cb)
