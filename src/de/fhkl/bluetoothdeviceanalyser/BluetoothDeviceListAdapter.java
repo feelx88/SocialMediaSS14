@@ -1,9 +1,11 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +19,7 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 {
 	LinkedList<BluetoothDevice> mDevices = new LinkedList<BluetoothDevice>();
 	LayoutInflater mInflater;
-	View mView;
+	HashMap<View, Integer> mDeviceIndizes = new HashMap<View, Integer>();
 	
 	public BluetoothDeviceListAdapter(Context context)
 	{
@@ -53,18 +55,17 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
-		if(mView == null)
-		{
-			mView = mInflater.inflate(R.layout.device_list_fragment, parent, false);
-			((TextView)mView.findViewById(R.id.name))
-				.setText(mDevices.get(position).getName());
-			((TextView)mView.findViewById(R.id.address))
-				.setText(mDevices.get(position).getAddress());
-			
-			mView.setOnClickListener(this);
-		}
+		View view = mInflater.inflate(R.layout.device_list_fragment, parent, false);
+		((TextView)view.findViewById(R.id.name))
+			.setText(mDevices.get(position).getName());
+		((TextView)view.findViewById(R.id.address))
+			.setText(mDevices.get(position).getAddress());
+		((CheckBox)view.findViewById(R.id.checkbox))
+			.setOnClickListener(this);
 		
-		return mView;
+		mDeviceIndizes.put(view.findViewById(R.id.checkbox), position);
+		
+		return view;
 	}
 
 	@Override
@@ -114,7 +115,12 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	@Override
 	public void onClick(View v)
 	{
-		((CheckBox)mView.findViewById(R.id.checkbox)).setChecked(true);
+		Context context = mInflater.getContext();
+		Intent i = new Intent(context, BluetoothService.class);
+		i.putExtra(BluetoothService.EXTRA_ACTION, BluetoothService.ID_ADD_DEVICE);
+		i.putExtra(BluetoothService.EXTRA_DEVICE, mDevices.get(mDeviceIndizes.get(v)));
+		
+		context.startService(i);
 	}
 	
 	public void add(BluetoothDevice device)
@@ -125,5 +131,6 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	public void clear()
 	{
 		mDevices.clear();
+		mDeviceIndizes.clear();
 	}
 }
