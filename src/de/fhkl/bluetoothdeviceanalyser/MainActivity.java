@@ -1,18 +1,48 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
 import android.os.Bundle;
-import android.app.Activity;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothAdapter.LeScanCallback;
-import android.content.Intent;
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
+import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.ListView;
 
-public class MainActivity extends Activity
+public class MainActivity extends FragmentActivity implements
+	ActionBar.TabListener, OnPageChangeListener
 {
 	protected BluetoothDeviceListAdapter mListAdapter;
+	protected ViewPager mViewPager;
+	private ActionBar mActionBar;
+	
+	protected class PagerAdapter extends FragmentPagerAdapter
+	{
+		Fragment mFragments[] = new Fragment[2];
+
+		public PagerAdapter(FragmentManager fm)
+		{
+			super(fm);
+			mFragments[0] = new DeviceListTabFragment();
+			mFragments[1] = new AnalyzeTabFragment();
+		}
+
+		@Override
+		public int getCount()
+		{
+			return mFragments.length;
+		}
+
+		@Override
+		public Fragment getItem(int position)
+		{
+			return mFragments[position];
+		}
+		
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -20,38 +50,14 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		mListAdapter = new BluetoothDeviceListAdapter(this);
-		final ListView list = ((ListView)findViewById(R.id.deviceList));
-		list.setAdapter(mListAdapter);
+		mViewPager = (ViewPager) findViewById(R.id.viewPager);
+		mViewPager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
+		mViewPager.setOnPageChangeListener(this);
 		
-		BluetoothService.setScanCallback(new LeScanCallback() {
-		
-			@Override
-			public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord)
-			{
-				runOnUiThread(new Runnable() {
-					
-					@Override
-					public void run()
-					{
-						mListAdapter.add(device);
-						list.requestLayout();
-					}
-				});
-			}
-		});
-		
-		final Intent serviceIntent = new Intent(this, BluetoothService.class);
-		startService(serviceIntent);
-		
-		findViewById(R.id.button1).setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v)
-			{
-				startService(serviceIntent);
-			}
-		});
+		mActionBar = getActionBar();
+		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		mActionBar.addTab(getActionBar().newTab().setText("Device list").setTabListener(this));
+		mActionBar.addTab(getActionBar().newTab().setText("Analyze").setTabListener(this));
 	}
 
 	@Override
@@ -60,6 +66,46 @@ public class MainActivity extends Activity
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+
+	@Override
+	public void onTabReselected(Tab tab, FragmentTransaction ft)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onTabSelected(Tab tab, FragmentTransaction ft)
+	{
+		mViewPager.setCurrentItem(tab.getPosition());
+	}
+
+	@Override
+	public void onTabUnselected(Tab tab, FragmentTransaction ft)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPageScrollStateChanged(int arg0)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPageScrolled(int arg0, float arg1, int arg2)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPageSelected(int arg0)
+	{
+		mActionBar.setSelectedNavigationItem(arg0);
 	}
 
 }
