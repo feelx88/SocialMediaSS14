@@ -49,6 +49,14 @@ public class AnalyzeTabFragment extends Fragment
 					mTextView.append("UUID: " + extras.getString(BluetoothService.EXTRA_CHARACTERISTIC_UUID) + "\n");
 					mTextView.append("Value: " + extras.getString(BluetoothService.EXTRA_CHARACTERISTIC_VALUE) + "\n");
 				}
+				else if(datatype == BluetoothService.ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED)
+				{
+					mTextView.append("\n");
+					mTextView.append("Service Discovery finished! (");
+					mTextView.append(device.getName() + ")\n");
+				}
+				
+				mTextView.scrollTo(0, Integer.MAX_VALUE);
 			}
 		}
 	};

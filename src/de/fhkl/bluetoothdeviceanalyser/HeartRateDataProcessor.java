@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -14,7 +15,6 @@ public class HeartRateDataProcessor implements IGattDataProcessor
 	public HeartRateDataProcessor(BluetoothGatt gatt)
 	{
 		mGatt = gatt;
-		mGatt.writeCharacteristic(new BluetoothGattCharacteristic(new UUID(0x2902L << 32, 0x800000805f9b34fbL), 0x1, 0));
 	}
 
 	@Override
@@ -31,7 +31,16 @@ public class HeartRateDataProcessor implements IGattDataProcessor
 			return;
 		}
 		
+		int datatype = extras.getInt(BluetoothService.EXTRA_DATA_TYPE);
 		
+		if(datatype == BluetoothService.ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED)
+		{
+			BluetoothGattCharacteristic characteristic = mGatt.getService(UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")).getCharacteristic(UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb"));
+			mGatt.setCharacteristicNotification(characteristic, true);
+			BluetoothGattDescriptor desc = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+			desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+			mGatt.writeDescriptor(desc);
+		}
 	}
 
 }

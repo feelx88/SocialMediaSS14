@@ -1,5 +1,6 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -39,6 +40,7 @@ public class BluetoothService extends Service
 	public static final int ID_DATATYPE_ADDED_TO_WATCHLIST = 1; 
 	public static final int ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED = 10;
 	public static final int ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED = 11;
+	public static final int ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED = 12;
 	
 	protected BluetoothAdapter mAdapter;
 	
@@ -63,6 +65,9 @@ public class BluetoothService extends Service
 			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
 			i.putExtra(EXTRA_CONNECTION_STATE, newState);
 			sendBroadcast(i);
+			
+			gatt.discoverServices();
+			
 			super.onConnectionStateChange(gatt, status, newState);
 		}
 		
@@ -72,11 +77,21 @@ public class BluetoothService extends Service
 		{
 			Intent i = new Intent(ACTION_DATA_AVAILABLE);
 			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
-			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED);
+			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
 			i.putExtra(EXTRA_CHARACTERISTIC_UUID, characteristic.getUuid().toString());
-			i.putExtra(EXTRA_CHARACTERISTIC_VALUE, characteristic.getValue().toString());
+			i.putExtra(EXTRA_CHARACTERISTIC_VALUE, Arrays.toString(characteristic.getValue()));
 			sendBroadcast(i);
 			super.onCharacteristicChanged(gatt, characteristic);
+		}
+		
+		@Override
+		public void onServicesDiscovered(BluetoothGatt gatt, int status)
+		{
+			Intent i = new Intent(ACTION_DATA_AVAILABLE);
+			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
+			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED);
+			sendBroadcast(i);
+			super.onServicesDiscovered(gatt, status);
 		}
 	}
 	
@@ -116,8 +131,9 @@ public class BluetoothService extends Service
 				else if(extras.getInt(EXTRA_ACTION) == ID_ADD_DEVICE)
 				{
 					BluetoothDevice device = (BluetoothDevice) extras.get(EXTRA_DEVICE);
-					mGatts.add(device.connectGatt(getApplicationContext(), false,
-							new GattCallback()));
+					BluetoothGatt gatt = device.connectGatt(getApplicationContext(), false,
+							new GattCallback());
+					mGatts.add(gatt);
 					
 					Intent i = new Intent(ACTION_DATA_AVAILABLE);
 					i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_ADDED_TO_WATCHLIST);
