@@ -35,9 +35,12 @@ public class HeartRateDataProcessor implements IGattDataProcessor
 		
 		if(datatype == BluetoothService.ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED)
 		{
-			BluetoothGattCharacteristic characteristic = mGatt.getService(UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")).getCharacteristic(UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb"));
+			BluetoothGattCharacteristic characteristic =
+					mGatt.getService(UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb"))
+					.getCharacteristic(UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb"));
 			mGatt.setCharacteristicNotification(characteristic, true);
-			BluetoothGattDescriptor desc = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+			BluetoothGattDescriptor desc =
+					characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
 			desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
 			mGatt.writeDescriptor(desc);
 		}
