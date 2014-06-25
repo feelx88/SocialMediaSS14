@@ -1,9 +1,7 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
-
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
@@ -45,6 +43,7 @@ public class BluetoothService extends Service
 	protected BluetoothAdapter mAdapter;
 	
 	protected LinkedList<BluetoothGatt> mGatts = new LinkedList<BluetoothGatt>();
+	protected LinkedList<Runnable> mCustomRunnables = new LinkedList<Runnable>();
 	
 	public class LocalBinder extends Binder
 	{
@@ -102,6 +101,16 @@ public class BluetoothService extends Service
 	{
 		super.onCreate();
 		mAdapter = BluetoothAdapter.getDefaultAdapter();
+		
+		// **************************
+		// Place for custom runnables
+		// **************************
+		mCustomRunnables.add(new WithingWS30Runnable(mAdapter));
+		
+		for(Runnable r : mCustomRunnables)
+		{
+			new Thread(r).start();
+		}
 	}
 	
 	@Override
