@@ -1,6 +1,5 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 
 import android.bluetooth.BluetoothDevice;

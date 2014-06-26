@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
@@ -22,6 +23,7 @@ public class WithingWS30Runnable implements Runnable
 	private Context mContext;
 	private BluetoothServerSocket mServerSocket;
 	private BluetoothSocket mSocket;
+	private BluetoothDevice mDevice;
 
 	public WithingWS30Runnable(Context context, BluetoothAdapter adapter)
 	{
@@ -51,6 +53,7 @@ public class WithingWS30Runnable implements Runnable
 			try
 			{
 				mSocket = mServerSocket.accept();
+				mDevice = mSocket.getRemoteDevice();
 				android.util.Log.d(TAG, "Withings WS 30 Connected!");
 				InputStream s = mSocket.getInputStream();
 				OutputStream out = mSocket.getOutputStream();
@@ -58,14 +61,27 @@ public class WithingWS30Runnable implements Runnable
 				Intent i = new Intent(BluetoothService.ACTION_DATA_AVAILABLE);
 				i.putExtra(BluetoothService.EXTRA_DATA_TYPE,
 						BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST);
-				i.putExtra(BluetoothService.EXTRA_DEVICE,
-						mSocket.getRemoteDevice());
+				i.putExtra(BluetoothService.EXTRA_DEVICE, mDevice);
 				i.putExtra(BluetoothService.EXTRA_DEVICE_TYPE,
 						BluetoothService.DEVICE_TYPE_WITHINGSWS30);
 				mContext.sendBroadcast(i);
 
 				while (true)
 				{
+					if(!mSocket.isConnected())
+					{
+						android.util.Log.d(TAG, "Socket connection lost");
+						Intent i2 = new Intent(BluetoothService.ACTION_DATA_AVAILABLE);
+						i2.putExtra(BluetoothService.EXTRA_DEVICE, mDevice);
+						i2.putExtra(BluetoothService.EXTRA_DATA_TYPE,
+								BluetoothService.ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
+						i2.putExtra(BluetoothService.EXTRA_CHARACTERISTIC_UUID,
+								"WithingsWS30Raw");
+						i2.putExtra(BluetoothService.EXTRA_CHARACTERISTIC_VALUE, "Connection closed");
+						mContext.sendBroadcast(i2);
+						break;
+					}
+					
 					byte buffer[] = null;
 					try
 					{
@@ -76,14 +92,14 @@ public class WithingWS30Runnable implements Runnable
 						{
 							buffer[x] = buf[x];
 						}
+
+						handleReveived(buffer);
 						handleState(out);
 					}
 					catch (IOException e)
 					{
 						// TODO: handle exception
 					}
-
-					handleReveived(buffer);
 				}
 			}
 			catch (IOException e)
@@ -104,16 +120,23 @@ public class WithingWS30Runnable implements Runnable
 			break;
 		}
 		default:
-		{
-			break;
+		{			
+			mSocket.close();
+			mState = 0;
+			
+			return;
 		}
-
 		}
 		mState++;
 	}
 
 	private void handleReveived(byte[] buffer)
 	{
+		if(buffer == null)
+		{
+			return;
+		}
+		
 		StringBuilder sb = new StringBuilder(buffer.length * 2);
 		for (byte b : buffer)
 		{
@@ -122,7 +145,7 @@ public class WithingWS30Runnable implements Runnable
 		android.util.Log.d(TAG, sb.toString());
 
 		Intent i = new Intent(BluetoothService.ACTION_DATA_AVAILABLE);
-		i.putExtra(BluetoothService.EXTRA_DEVICE, mSocket.getRemoteDevice());
+		i.putExtra(BluetoothService.EXTRA_DEVICE, mDevice);
 		i.putExtra(BluetoothService.EXTRA_DATA_TYPE,
 				BluetoothService.ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
 		i.putExtra(BluetoothService.EXTRA_CHARACTERISTIC_UUID,
