@@ -26,23 +26,22 @@ import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.Menu;
 
 public class MainActivity extends FragmentActivity implements
-	ActionBar.TabListener, OnPageChangeListener
+		ActionBar.TabListener, OnPageChangeListener
 {
 	protected BluetoothDeviceListAdapter mListAdapter;
 	protected ViewPager mViewPager;
 	private ActionBar mActionBar;
-	private HashMap<BluetoothDevice, IGattDataProcessor> mDataProcessors =
-			new HashMap<BluetoothDevice, IGattDataProcessor>();
+	private HashMap<BluetoothDevice, IGattDataProcessor> mDataProcessors = new HashMap<BluetoothDevice, IGattDataProcessor>();
 	private BluetoothService mBluetoothService;
-	
+
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
-		
+
 		@Override
 		public void onServiceDisconnected(ComponentName name)
-		{	
+		{
 			mBluetoothService = null;
 		}
-		
+
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service)
 		{
@@ -50,36 +49,56 @@ public class MainActivity extends FragmentActivity implements
 			mBluetoothService = (BluetoothService) binder.getService();
 		}
 	};
-	
+
 	private BroadcastReceiver mDataReceiver = new BroadcastReceiver() {
-		
+
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
 			String action = intent.getAction();
-			if(action == BluetoothService.ACTION_DATA_AVAILABLE)
+			if (action == BluetoothService.ACTION_DATA_AVAILABLE)
 			{
-				BluetoothDevice device =
-						(BluetoothDevice) intent.getExtras().get(BluetoothService.EXTRA_DEVICE);
-				
+				BluetoothDevice device = (BluetoothDevice) intent.getExtras()
+						.get(BluetoothService.EXTRA_DEVICE);
+
 				int datatype = intent.getExtras().getInt(
 						BluetoothService.EXTRA_DATA_TYPE);
-				if(datatype == BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST)
+				if (datatype == BluetoothService.ID_DATATYPE_ADDED_TO_WATCHLIST)
 				{
-					if(mBluetoothService != null)
+					if (mBluetoothService != null)
 					{
-						BluetoothGatt gatt = mBluetoothService.mGatts.get(0);
-						mDataProcessors.put(device, new HeartRateDataProcessor(gatt));
+						int devicetype = intent.getExtras().getInt(
+								BluetoothService.EXTRA_DEVICE_TYPE);
+						
+						switch(devicetype)
+						{
+						case BluetoothService.DEVICE_TYPE_HRM:
+						{
+							BluetoothGatt gatt = mBluetoothService.mGatts.get(0);
+							mDataProcessors.put(device, new HeartRateDataProcessor(
+									gatt));
+							break;
+						}
+						case BluetoothService.DEVICE_TYPE_WITHINGSWS30:
+						{
+							mDataProcessors.put(device, new WithingsWS30GattDummy());
+							break;
+						}
+						}
 					}
 				}
 				else
 				{
-					mDataProcessors.get(device).processIncomingData(intent);
+					IGattDataProcessor processor = mDataProcessors.get(device);
+					if (processor != null)
+					{
+						processor.processIncomingData(intent);
+					}
 				}
 			}
 		}
 	};
-	
+
 	protected class PagerAdapter extends FragmentPagerAdapter
 	{
 		Fragment mFragments[] = new Fragment[2];
@@ -109,22 +128,24 @@ public class MainActivity extends FragmentActivity implements
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		mViewPager = (ViewPager) findViewById(R.id.viewPager);
 		mViewPager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
 		mViewPager.setOnPageChangeListener(this);
-		
+
 		mActionBar = getActionBar();
 		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-		mActionBar.addTab(getActionBar().newTab().setText("Device list").setTabListener(this));
-		mActionBar.addTab(getActionBar().newTab().setText("Analyze").setTabListener(this));
-		
-		registerReceiver(mDataReceiver,
-				new IntentFilter(BluetoothService.ACTION_DATA_AVAILABLE));
+		mActionBar.addTab(getActionBar().newTab().setText("Device list")
+				.setTabListener(this));
+		mActionBar.addTab(getActionBar().newTab().setText("Analyze")
+				.setTabListener(this));
+
+		registerReceiver(mDataReceiver, new IntentFilter(
+				BluetoothService.ACTION_DATA_AVAILABLE));
 		Intent i = new Intent(this, BluetoothService.class);
 		bindService(i, mServiceConnection, 0);
 	}
-	
+
 	@Override
 	protected void onDestroy()
 	{
@@ -144,7 +165,7 @@ public class MainActivity extends FragmentActivity implements
 	public void onTabReselected(Tab tab, FragmentTransaction ft)
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -157,21 +178,21 @@ public class MainActivity extends FragmentActivity implements
 	public void onTabUnselected(Tab tab, FragmentTransaction ft)
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onPageScrollStateChanged(int arg0)
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onPageScrolled(int arg0, float arg1, int arg2)
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

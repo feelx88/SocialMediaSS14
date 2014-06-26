@@ -3,8 +3,10 @@ package de.fhkl.bluetoothdeviceanalyser;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
@@ -20,7 +22,7 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	LinkedList<BluetoothDevice> mDevices = new LinkedList<BluetoothDevice>();
 	LayoutInflater mInflater;
 	HashMap<View, Integer> mDeviceIndizes = new HashMap<View, Integer>();
-	
+
 	public BluetoothDeviceListAdapter(Context context)
 	{
 		mInflater = LayoutInflater.from(context);
@@ -55,16 +57,16 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
-		View view = mInflater.inflate(R.layout.device_list_fragment, parent, false);
-		((TextView)view.findViewById(R.id.name))
-			.setText(mDevices.get(position).getName());
-		((TextView)view.findViewById(R.id.address))
-			.setText(mDevices.get(position).getAddress());
-		((CheckBox)view.findViewById(R.id.checkbox))
-			.setOnClickListener(this);
-		
+		View view = mInflater.inflate(R.layout.device_list_fragment, parent,
+				false);
+		((TextView) view.findViewById(R.id.name)).setText(mDevices
+				.get(position).getName());
+		((TextView) view.findViewById(R.id.address)).setText(mDevices.get(
+				position).getAddress());
+		((CheckBox) view.findViewById(R.id.checkbox)).setOnClickListener(this);
+
 		mDeviceIndizes.put(view.findViewById(R.id.checkbox), position);
-		
+
 		return view;
 	}
 
@@ -111,23 +113,53 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	{
 		return true;
 	}
-	
+
 	@Override
-	public void onClick(View v)
+	public void onClick(final View v)
 	{
-		Context context = mInflater.getContext();
-		Intent i = new Intent(context, BluetoothService.class);
-		i.putExtra(BluetoothService.EXTRA_ACTION, BluetoothService.ID_ADD_DEVICE);
-		i.putExtra(BluetoothService.EXTRA_DEVICE, mDevices.get(mDeviceIndizes.get(v)));
-		
-		context.startService(i);
+		CharSequence deviceTypes[] = new CharSequence[] { "Heart Rate Monitor",
+				"Withings WS 30 Scale" };
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(mInflater.getContext());
+		builder.setTitle("Select device type");
+		builder.setItems(deviceTypes, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				Context context = mInflater.getContext();
+				Intent i = new Intent(context, BluetoothService.class);
+				i.putExtra(BluetoothService.EXTRA_ACTION,
+						BluetoothService.ID_ADD_DEVICE);
+				i.putExtra(BluetoothService.EXTRA_DEVICE,
+						mDevices.get(mDeviceIndizes.get(v)));
+				
+				switch (which)
+				{
+				case 0:
+				{
+					i.putExtra(BluetoothService.EXTRA_DEVICE_TYPE,
+							BluetoothService.DEVICE_TYPE_HRM);
+					break;
+				}
+				case 1:
+				{
+					i.putExtra(BluetoothService.EXTRA_DEVICE_TYPE,
+							BluetoothService.DEVICE_TYPE_WITHINGSWS30);
+					break;
+				}
+				}
+				
+				context.startService(i);
+			}
+		});
+		builder.show();
 	}
-	
+
 	public void add(BluetoothDevice device)
 	{
 		mDevices.add(device);
 	}
-	
+
 	public void clear()
 	{
 		mDevices.clear();

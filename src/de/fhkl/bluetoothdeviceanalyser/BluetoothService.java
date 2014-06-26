@@ -29,7 +29,7 @@ public class BluetoothService extends Service
 	public static final String ACTION_DATA_AVAILABLE =
 			"de.fhkl.bluetoothdeviceanalyser.BluetoothService.ACTION_DATA_AVAILABLE";
 	
-	public static final String EXTRA_ID = "EXTRA_ID"; 
+	public static final String EXTRA_DEVICE_TYPE = "EXTRA_DEVICE_TYPE";
 	public static final String EXTRA_DATA_TYPE = "EXTRA_DATA_TYPE";
 	public static final String EXTRA_CONNECTION_STATE = "EXTRA_CONNECTION_STATE";
 	public static final String EXTRA_CHARACTERISTIC_UUID = "EXTRA_CHARACTERISTIC_UUID";
@@ -39,6 +39,9 @@ public class BluetoothService extends Service
 	public static final int ID_DATATYPE_GATT_CONNECTION_STATE_CHANGED = 10;
 	public static final int ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED = 11;
 	public static final int ID_DATATYPE_GATT_SERVICE_DISCOVERY_FINISHED = 12;
+	
+	public static final int DEVICE_TYPE_HRM = 0;
+	public static final int DEVICE_TYPE_WITHINGSWS30 = 1;
 	
 	protected BluetoothAdapter mAdapter;
 	
@@ -105,7 +108,7 @@ public class BluetoothService extends Service
 		// **************************
 		// Place for custom runnables
 		// **************************
-		mCustomRunnables.add(new WithingWS30Runnable(mAdapter));
+		mCustomRunnables.add(new WithingWS30Runnable(getApplicationContext(), mAdapter));
 		
 		for(Runnable r : mCustomRunnables)
 		{
@@ -147,7 +150,6 @@ public class BluetoothService extends Service
 					Intent i = new Intent(ACTION_DATA_AVAILABLE);
 					i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_ADDED_TO_WATCHLIST);
 					i.putExtra(EXTRA_DEVICE, device);
-					i.putExtra(EXTRA_ID, mGatts.size() - 1);
 					sendBroadcast(i);
 				}
 			}
