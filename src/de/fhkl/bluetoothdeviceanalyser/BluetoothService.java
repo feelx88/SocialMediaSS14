@@ -81,7 +81,7 @@ public class BluetoothService extends Service
 			i.putExtra(EXTRA_DEVICE, gatt.getDevice());
 			i.putExtra(EXTRA_DATA_TYPE, ID_DATATYPE_GATT_CHARACTERISTIC_CHANGED);
 			i.putExtra(EXTRA_CHARACTERISTIC_UUID, characteristic.getUuid().toString());
-			i.putExtra(EXTRA_CHARACTERISTIC_VALUE, Arrays.toString(characteristic.getValue()));
+			i.putExtra(EXTRA_CHARACTERISTIC_VALUE, characteristic.getValue());
 			sendBroadcast(i);
 			super.onCharacteristicChanged(gatt, characteristic);
 		}
