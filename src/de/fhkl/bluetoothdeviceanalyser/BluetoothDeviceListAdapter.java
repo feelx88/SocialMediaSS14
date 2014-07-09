@@ -118,7 +118,8 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 	public void onClick(final View v)
 	{
 		CharSequence deviceTypes[] = new CharSequence[] { "Heart Rate Monitor",
-				"Withings WS 30 Scale" };
+				"Withings WS 30 Scale",
+				"Generic" };
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(mInflater.getContext());
 		builder.setTitle("Select device type");
@@ -145,6 +146,12 @@ public class BluetoothDeviceListAdapter implements ListAdapter, OnClickListener
 				{
 					i.putExtra(BluetoothService.EXTRA_DEVICE_TYPE,
 							BluetoothService.DEVICE_TYPE_WITHINGSWS30);
+					break;
+				}
+				case 2:
+				{
+					i.putExtra(BluetoothService.EXTRA_DEVICE_TYPE,
+							BluetoothService.DEVICE_TYPE_GENERIC);
 					break;
 				}
 				}

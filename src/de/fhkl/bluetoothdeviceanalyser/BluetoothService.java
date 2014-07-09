@@ -42,6 +42,7 @@ public class BluetoothService extends Service
 	
 	public static final int DEVICE_TYPE_HRM = 0;
 	public static final int DEVICE_TYPE_WITHINGSWS30 = 1;
+	public static final int DEVICE_TYPE_GENERIC = 2;
 	
 	protected BluetoothAdapter mAdapter;
 	

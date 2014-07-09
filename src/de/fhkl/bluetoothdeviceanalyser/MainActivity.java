@@ -72,6 +72,13 @@ public class MainActivity extends FragmentActivity implements
 						
 						switch(devicetype)
 						{
+						case BluetoothService.DEVICE_TYPE_GENERIC:
+						{
+							BluetoothGatt gatt = mBluetoothService.mGatts.get(0);
+							mDataProcessors.put(device, new GenericDataProcessor(
+									gatt));
+							break;
+						}
 						case BluetoothService.DEVICE_TYPE_HRM:
 						{
 							BluetoothGatt gatt = mBluetoothService.mGatts.get(0);
