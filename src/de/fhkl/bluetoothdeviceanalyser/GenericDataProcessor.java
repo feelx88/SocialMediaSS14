@@ -1,8 +1,6 @@
 package de.fhkl.bluetoothdeviceanalyser;
 
 import java.util.List;
-import java.util.UUID;
-
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
